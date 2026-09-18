@@ -1,7 +1,9 @@
-import argparse 
+import argparse
 import csv
 import sys
 from pathlib import Path
+import logging
+
 
 def check_data(filename):
     """Read the CSV file and check for missing values."""
@@ -19,14 +21,24 @@ def check_data(filename):
 
     return header, data, missing_rows
 
+
+logging.basicConfig(
+    level=logging.INFO,
+    format="%(asctime)s %(levelname)-8s %(message)s",
+    datefmt="%H:%M:%S"
+)
+
+logger = logging.getLogger(__name__)
+
+
 parser = argparse.ArgumentParser(
-    description= "Check the quality of CSV file"
+    description="Check the quality of CSV file"
 )
 
 parser.add_argument(
     "--input", "-i",
     required=True,
-    help= "CSV file to check"
+    help="CSV file to check"
 )
 
 parser.add_argument(
@@ -35,27 +47,43 @@ parser.add_argument(
     help="Output report filename"
 )
 
-
 parser.add_argument(
-    "--verbose", "-v", 
-    action="store_true", 
+    "--verbose", "-v",
+    action="store_true",
     help="Show detailed DEBUG messages"
 )
 
 args = parser.parse_args()
 
+if args.verbose:
+    logger.setLevel(logging.DEBUG)
+
+logger.debug(f"Arguments parsed: filename={args.input}")
+
 p = Path(args.input)
+
 if not p.is_file():
-    print(f"File not found: '{args.input}'")
+    logger.error(f"File not found: '{args.input}'")
     sys.exit(1)
 
-print(f"File validated: '{args.input}'")
+logger.info(f"File validated: '{args.input}'")
 
-# Check the data
+logger.debug(f"Loading data from: {args.input}")
+
 header, data, missing_rows = check_data(args.input)
 
-# Save the report
+logger.info(f"Loaded {len(data)} rows")
+
+if len(data) == 0:
+    logger.error("Input file contains no data; cannot continue")
+    sys.exit(1)
+
+for row_number in missing_rows:
+    logger.warning(f"Row {row_number} has missing values")
+
 with open(args.output, "w") as f:
     f.write(f"Number of rows: {len(data)}\n")
     f.write(f"Number of columns: {len(header)}\n")
     f.write(f"Number of rows with missing values: {len(missing_rows)}\n")
+
+logger.info(f"Report saved to {args.output}")
