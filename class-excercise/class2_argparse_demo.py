@@ -1,4 +1,8 @@
 import argparse
+import pandas as pd
+import csv 
+
+
 
 parser = argparse.ArgumentParser(
     description= "Analyze a data file"
@@ -23,3 +27,6 @@ parser.add_argument(
 )
 
 args = parser.parse_args()
+
+
+pd.read_csv(input_data)
